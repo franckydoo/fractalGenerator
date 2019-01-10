@@ -26,7 +26,14 @@ namespace AvaloniaFractalGenerator
             public double Iterations {get;set;} 
         }
         public int[] pixels {get; set;}
+        public int Details {get; set;}
+        private int OldDetails {get; set;}
         private List<PixelValue> calculatedValues {get; set;}
+        private bool IsRectZoom = false;
+        private bool IsCenter = false;
+
+        private double AddX {get;set;}
+        private double AddY {get;set;}
         public int MaxAngle {get;set;}
         public double FreqRed {get;set;}
         public double PhaseRed {get;set;}
@@ -45,25 +52,30 @@ namespace AvaloniaFractalGenerator
             ResetCommand = new DelegateCommand(Reset);
             ZoomInCommand = new DelegateCommand(ZoomIn);
             ZoomOutCommand = new DelegateCommand(ZoomOut);
-            RectangleZoomCommand = new DelegateCommand(Reset);
+            CenterCommand = new DelegateCommand(Center);
+            RectZoomCommand = new DelegateCommand(RectZoom);
 
 
             // Bgra8888 is device-native and much faster.
-            Bitmap = new WritableBitmap(1920, 1080, PixelFormat.Bgra8888);        
-            BlurValue = 3;                          
+            Bitmap = new WritableBitmap(1920, 1080, PixelFormat.Bgra8888);   
+  
+            BlurValue = 3;  
+            AddX = -1.2395;
+            AddY = 0.1;       
             pixels = new int[1920*1080];
 
             MaxAngle = 1000000;
 
-            FreqRed = 0.00015;
+            FreqRed = 0.0015;
             PhaseRed = 0;
-            FreqGreen = 0.00015;
+            FreqGreen = 0.0015;
             PhaseGreen = 1;
-            FreqBlue = 0.00015;
+            FreqBlue = 0.0015;
             PhaseBlue = 0;
             ZoomFactor = 64;
+            Details = 50 + ZoomFactor * 2;
             calculatedValues = new List<PixelValue>(); 
-            CalcMandelbrot(1920, 1080, 50, 50);
+            CalcMandelbrot(1920, 1080, Details, Details);
             Reset();
 
             Task.Run(() => TaskRun());
@@ -73,9 +85,6 @@ namespace AvaloniaFractalGenerator
         public double OffsetX {get; set;}
         public double OffsetY {get; set;}
 
-        public double PosX {get; set;}
-        public double PosY {get; set;}
-
         public int DelayMsInverted
         {
             get => MaxDelay - _delayMs;
@@ -84,11 +93,13 @@ namespace AvaloniaFractalGenerator
 
         public int MaxDelay => 16;
 
+        public string Cursor = "Hand";
+
         public ICommand ResetCommand { get; }
         public ICommand ZoomInCommand { get; }
         public ICommand ZoomOutCommand { get; }
         public ICommand CenterCommand { get; }
-        public ICommand RectangleZoomCommand { get; }
+        public ICommand RectZoomCommand { get; }
 
         public IEnumerable<Color> Brushes => new[]
         {
@@ -135,8 +146,11 @@ namespace AvaloniaFractalGenerator
 
         private void Reset() 
         {
-            colors = GenerateColors(100000);
+            colors = GenerateColors(1000000);
             ResetBitmap();
+            if (OldDetails != Details) {
+                CalcMandelbrot(1920, 1080, Details, Details);
+            }
             Paint();
             BoxBlur(Bitmap, BlurValue);
         }
@@ -314,7 +328,7 @@ namespace AvaloniaFractalGenerator
             }
         }
 
-        private double Julia (double x, double y, double xAdd, double yAdd, int maxResultQuad, int max) {
+        private double Julia (double x, double y, double xAdd, double yAdd, double maxResultQuad, int max) {
             int remain = max;
             double xx = x * x, 
                    yy = y * y, 
@@ -334,11 +348,12 @@ namespace AvaloniaFractalGenerator
 
         private void CalcMandelbrot(int width, int height, int maxResultQuad, int max)
         {
+            OldDetails = max; 
             for (int row = 0; row < height; row++) {
                 for (int col = 0; col < width; col++) {
                     double x = (col - width / 2.0) * 4.0 / width,
                            y = (row - height / 2.0) * 4.0 / width, 
-                           i = Julia(x / ZoomFactor - 1.2395, y / ZoomFactor + 0.1, x / ZoomFactor - 1.2395, y / ZoomFactor + 0.1, maxResultQuad, max);
+                           i = Julia(x / ZoomFactor + AddX, y / ZoomFactor + AddY, x / ZoomFactor + AddX, y / ZoomFactor + AddY, maxResultQuad, max);
                     if (i < max && i >= 0) 
                         calculatedValues.Add(new PixelValue {
                             X = (double)col / width, 
@@ -357,29 +372,99 @@ namespace AvaloniaFractalGenerator
             if (ZoomFactor < 1) {
                 ZoomFactor = 1;
             }
-            CalcMandelbrot(1920, 1080, 50, 50);
+            if (Details == ZoomFactor * 4 + 50) {
+                Details = 50 + ZoomFactor * 2;
+            }
+            CalcMandelbrot(1920, 1080, Details, Details);
             Reset();
         }
 
         private void ZoomIn() {
             calculatedValues = new List<PixelValue>();
             ZoomFactor *= 2;
-            CalcMandelbrot(1920, 1080, 50, 50);
+            if (50 + ZoomFactor * 2 < Details) {
+                Details = 50 + ZoomFactor * 2;
+            }
+            CalcMandelbrot(1920, 1080, Details, Details);
             Reset();
         }
 
         public void CenterBitmap(double x, double y) {
-            var width = Bitmap.PixelWidth;
-            var height = Bitmap.PixelHeight;
+            if (IsCenter) {
+                var width = Bitmap.PixelWidth;
+                var height = Bitmap.PixelHeight;
 
-            var px = (int) (x * width);
-            var py = (int) (y * height);
+                var px = (int) (x * width);
+                var py = (int) (y * height);
+
+                
+                //AddX = -1.2395;
+                //AddY = 0.1;  
+                //x = (1920 / 2.0) * 4.0 / 1920, = 2
+                //y = (1280 / 2.0) * 4.0 / 1280,
+                
+                
+                var middle = 1920 / 2;
+                if (px < middle)
+                    AddX-= (double)((middle - px) / (double)(ZoomFactor*500));
+                else
+                    AddX+= (double)((px - middle) / (double)(ZoomFactor*500));
+                middle = 1280 / 2;
+                if (py < middle)
+                    AddY-= (double)((middle - py) / (double)(ZoomFactor*820));
+                else
+                    AddY+= (double)((py - middle) / (double)(ZoomFactor*820));
+
+                IsCenter = false;
+                calculatedValues = new List<PixelValue>();
+                CalcMandelbrot(1920, 1080, Details, Details);
+                Reset();
+                //Console.Write((double)((middle - px) / ZoomFactor) / 500);
+                
+            }
+        }
+
+        private void RectZoom() {
+            IsRectZoom = true;
+            IsCenter = false;
+        }
+
+        private void Center() {
+            IsRectZoom = false;
+            IsCenter = true;
+        }
+        public void RectangleInit(double x, double y) {
+            if (IsRectZoom) {
+                (OffsetX, OffsetY) = (x, y);
+            }
+        }
+
+        public void Rectangle(double x, double y) {
+            if (IsRectZoom) {
+                var width = Bitmap.PixelWidth;
+                var height = Bitmap.PixelHeight;
+
+                var px = (int) (x * width);
+                var py = (int) (y * height);
+            }
+        }
+
+        public void RectangleZoom(double x, double y) {
+            if (IsRectZoom) {
+                var width = Bitmap.PixelWidth;
+                var height = Bitmap.PixelHeight;
+
+                var px = (int) (x * width);
+                var py = (int) (y * height);
+                IsRectZoom = false;
+            }
+
         }
 
         public unsafe void StoreFile(string fileName)
         {
             MemoryStream data = new MemoryStream();
-            Bitmap.Save(data); 
+            Bitmap.Save(data);
             data.Seek(0, SeekOrigin.Begin);
             try{
                 using (var img = Image.Load(data, new PngDecoder()))

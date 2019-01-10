@@ -26,10 +26,10 @@ namespace AvaloniaFractalGenerator
         private void InitializeComponent()
         {
             AvaloniaXamlLoaderPortableXaml.Load(this);
-
             _img = ((Grid) Content).Children.First();
             _img.PointerMoved += Image_PointerMoved;
             _img.PointerPressed += Img_PointerPressed;
+            _img.PointerReleased += Img_PointerReleased;
             _viewModel = new MandelBrotModel(() =>
                 Dispatcher.UIThread.InvokeAsync(() => _img.InvalidateVisual()).Wait());
         }
@@ -39,6 +39,16 @@ namespace AvaloniaFractalGenerator
             if (e.InputModifiers.HasFlag(InputModifiers.LeftMouseButton))
             {
                 var (x, y) = GetScaledPosition(e, _img);
+                _viewModel.Rectangle(x, y);
+            }
+        }
+
+        private void Img_PointerReleased(object sender, PointerEventArgs e)
+        {
+            if (e.InputModifiers.HasFlag(InputModifiers.LeftMouseButton))
+            {
+                var (x, y) = GetScaledPosition(e, _img);
+                _viewModel.RectangleZoom(x, y);
             }
         }
 
@@ -47,6 +57,7 @@ namespace AvaloniaFractalGenerator
             if (e.MouseButton == MouseButton.Left && e.ClickCount == 1)
             {
                 var (x, y) = GetScaledPosition(e, _img);
+                _viewModel.RectangleInit(x, y);
                 _viewModel.CenterBitmap(x, y);
             }
             if (e.MouseButton == MouseButton.Right && e.ClickCount == 1)
