@@ -3,6 +3,7 @@ using System.Linq;
 using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
@@ -13,33 +14,41 @@ namespace AvaloniaFractalGenerator
     public class MainWindow : Window
     {
         private MandelBrotModel _viewModel;
-        private IControl _img;
+        private Image _img;
+        private TextBox _text;
+        private Rectangle _rect;
 
         public MainWindow()
         {
             InitializeComponent();
-            this.AttachDevTools();
-
             DataContext = _viewModel;
         }
 
         private void InitializeComponent()
         {
             AvaloniaXamlLoaderPortableXaml.Load(this);
-            _img = ((Grid) Content).Children.First();
-            _img.PointerMoved += Image_PointerMoved;
+            _img = this.FindControl<Image>("Overlay");
+            _img.PointerMoved += Img_PointerMoved;
             _img.PointerPressed += Img_PointerPressed;
             _img.PointerReleased += Img_PointerReleased;
+
+            _text = this.FindControl<TextBox>("textBox");
+            _rect = this.FindControl<Rectangle>("Rect");
+
             _viewModel = new MandelBrotModel(() =>
                 Dispatcher.UIThread.InvokeAsync(() => _img.InvalidateVisual()).Wait());
+            
+            _viewModel.MsgBox = _text;
+            _viewModel.Rect = _rect;
         }
 
-        private void Image_PointerMoved(object sender, PointerEventArgs e)
+        private void Img_PointerMoved(object sender, PointerEventArgs e)
         {
             if (e.InputModifiers.HasFlag(InputModifiers.LeftMouseButton))
             {
                 var (x, y) = GetScaledPosition(e, _img);
-                _viewModel.Rectangle(x, y);
+                Console.Write(x);
+                _viewModel.Rectangle(x * this.Width, y * this.Height);
             }
         }
 
@@ -48,7 +57,7 @@ namespace AvaloniaFractalGenerator
             if (e.InputModifiers.HasFlag(InputModifiers.LeftMouseButton))
             {
                 var (x, y) = GetScaledPosition(e, _img);
-                _viewModel.RectangleZoom(x, y);
+                _viewModel.RectangleZoom(this.Width, this.Height);
             }
         }
 
@@ -57,7 +66,7 @@ namespace AvaloniaFractalGenerator
             if (e.MouseButton == MouseButton.Left && e.ClickCount == 1)
             {
                 var (x, y) = GetScaledPosition(e, _img);
-                _viewModel.RectangleInit(x, y);
+                _viewModel.RectangleInit(x * this.Width, y * this.Height);
                 _viewModel.CenterBitmap(x, y);
             }
             if (e.MouseButton == MouseButton.Right && e.ClickCount == 1)
@@ -83,10 +92,8 @@ namespace AvaloniaFractalGenerator
         private static (double x, double y) GetScaledPosition(PointerEventArgs e, IVisual visual)
         {
             var pos = e.GetPosition(visual);
-
             var x = pos.X / visual.Bounds.Width;
             var y = pos.Y / visual.Bounds.Height;
-
             return (x, y);
         }
     }
