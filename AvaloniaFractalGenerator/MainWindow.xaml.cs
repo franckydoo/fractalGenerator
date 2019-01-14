@@ -47,7 +47,6 @@ namespace AvaloniaFractalGenerator
             if (e.InputModifiers.HasFlag(InputModifiers.LeftMouseButton))
             {
                 var (x, y) = GetScaledPosition(e, _img);
-                Console.Write(x);
                 _viewModel.Rectangle(x * this.Width, y * this.Height);
             }
         }

@@ -360,33 +360,33 @@ namespace AvaloniaFractalGenerator
 
 
 
-        private void Center(double x, double y) {
-            if (IsCenter) {
-                int width = Bitmap.PixelWidth,
-                    height = Bitmap.PixelHeight,
-                    px = (int)(x * width),
-                    py = (int)(y * height);                
-                double middle = ResX / 2;
-                if (px < middle) {
-                    AddX-= (double)((middle - px) / (double)(ZoomFactor * 500));
-                }
-                else {
-                    AddX+= (double)((px - middle) / (double)(ZoomFactor * 500));
-                }
-                middle = ResY / 2;
-                if (py < middle) {
-                    AddY-= (double)((middle - py) / (double)(ZoomFactor * 500));
-                }
-                else {
-                    AddY+= (double)((py - middle) / (double)(ZoomFactor * 500));
-                }
-                IsCenter = false;
+        private void Center(double x, double y) {      
+            int width = Bitmap.PixelWidth,
+                height = Bitmap.PixelHeight,
+                px = (int)(x * width),
+                py = (int)(y * height);                
+            double middle = ResX / 2;
+            if (px < middle) {
+                AddX-= (double)((middle - px) / (double)(ZoomFactor * 500));
+            }
+            else {
+                AddX+= (double)((px - middle) / (double)(ZoomFactor * 500));
+            }
+            middle = ResY / 2;
+            if (py < middle) {
+                AddY-= (double)((middle - py) / (double)(ZoomFactor * 500));
+            }
+            else {
+                AddY+= (double)((py - middle) / (double)(ZoomFactor * 500));
             }
         }
 
         public void CenterBitmap(double x, double y) {
-            Center(x,y);
-            RePaintMandelbrot();
+            if (IsCenter) {
+                Center(x,y);
+                RePaintMandelbrot();
+                IsCenter = false;
+            }
         }
 
         private void RePaintMandelbrot() {
@@ -433,7 +433,6 @@ namespace AvaloniaFractalGenerator
                 Rect.Width = 1;
                 Rect.Height = 1;
                 IsRectZoom = false;
-                IsCenter = true;
                 Center(left + (width / 2), top + (height / 2));
                 ZoomFactor = (int)ZoomFactor * (100 / (xProz > yProz ? xProz : yProz)); 
                 RePaintMandelbrot();
