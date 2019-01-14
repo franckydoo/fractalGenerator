@@ -19,4 +19,5 @@ Cross-platform Fractal Generator on .NET Core, [Avalonia UI](https://github.com/
 - Zoom In and Zoom Out buttons
 - Button for center image on cursor position
 - Button for rectangled zoom
-- Right-click to save the image
+- Right-click to save the image as PNG, BMP, JPG and GIF
+- Message box for infos about the used tool and the zoom state
