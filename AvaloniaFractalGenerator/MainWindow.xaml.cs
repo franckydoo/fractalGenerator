@@ -15,7 +15,7 @@ namespace AvaloniaFractalGenerator
     {
         private MandelBrotModel _viewModel;
         private Image _img;
-        private TextBox _text;
+        private TextBlock _text;
         private Rectangle _rect;
 
         public MainWindow()
@@ -32,7 +32,7 @@ namespace AvaloniaFractalGenerator
             _img.PointerPressed += Img_PointerPressed;
             _img.PointerReleased += Img_PointerReleased;
 
-            _text = this.FindControl<TextBox>("textBox");
+            _text = this.FindControl<TextBlock>("textBox");
             _rect = this.FindControl<Rectangle>("Rect");
 
             _viewModel = new MandelBrotModel(() =>

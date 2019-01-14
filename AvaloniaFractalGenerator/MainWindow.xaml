@@ -65,7 +65,9 @@
                     Data="M435,260c0.876,0,1.729-0.117,2.593-0.128c70-1.401,127-59,127-130c0-71-57-128-127-130C437,0.117,436,0,435,0c-72,0-130,58-130,130C305,202,363,260,435,260z M462,27c45,11,80,53,80,103c0,49-34,91-80,103V27z" />
                 <Slider Value="{Binding PhaseBlue, Mode=TwoWay}" ToolTip.Tip="Phase Blue" VerticalAlignment="Center" Minimum="0.0" Maximum="1.0" Width="100" />
             </StackPanel>
-            <TextBox Name="textBox" Text="" Margin="5"/>
+            <Grid Width="150">
+                <TextBlock Name="textBox" Text="Move sliders to control detail level, box blur, color frequency and color phases." Foreground="White" TextWrapping="Wrap" Margin="5"/>
+            </Grid>
         </StackPanel> 
     </Grid>
 </Window>

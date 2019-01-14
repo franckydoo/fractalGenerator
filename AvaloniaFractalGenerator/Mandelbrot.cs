@@ -38,7 +38,8 @@ namespace AvaloniaFractalGenerator
         private Color[] colors {get; set;}
         private int ZoomFactor {get; set;}
         private int _delayMs = 1;
-        public TextBox MsgBox {get;set;}
+        private const string DefaultMsg = "Move sliders to control detail level, box blur, color frequency and color phases.";
+        public TextBlock MsgBox {get;set;}
         public Rectangle Rect {get;set;}
         public int[] pixels {get; set;}
         public double Details {get; set;}
@@ -88,7 +89,6 @@ namespace AvaloniaFractalGenerator
             ZoomFactor = 64;
             FilterValue = 50;
             Details = FilterValue + ZoomFactor * 2;
-
             RePaintMandelbrot();
 
             Task.Run(() => TaskRun());
@@ -348,17 +348,19 @@ namespace AvaloniaFractalGenerator
 
         private void ZoomIn() {
             ZoomFactor *= 2;
-            //TODO RectZoom
-            if (ZoomFactor > MaxZoomFactor) {
-                ZoomFactor = MaxZoomFactor;
-                //TODO InfoBox
-                MsgBox.Text = "The max Zoom Factor is reached. If you need a deeper zoom, set Julia input to decimal and buy a supercomputer.";
-            }
+            CheckMaxZoom();
             Details = FilterValue + ZoomFactor * 2;
             RePaintMandelbrot();
         }
 
-
+        private void CheckMaxZoom() {
+            if (ZoomFactor > MaxZoomFactor) {
+                ZoomFactor = MaxZoomFactor;
+                MsgBox.Text = "The max Zoom Factor is reached. If you need a deeper zoom, set Julia input to decimal and buy a supercomputer.";
+            } else {
+                MsgBox.Text = DefaultMsg;
+            }
+        }
 
         private void Center(double x, double y) {      
             int width = Bitmap.PixelWidth,
@@ -386,6 +388,7 @@ namespace AvaloniaFractalGenerator
                 Center(x,y);
                 RePaintMandelbrot();
                 IsCenter = false;
+                MsgBox.Text = DefaultMsg;
             }
         }
 
@@ -398,11 +401,13 @@ namespace AvaloniaFractalGenerator
         private void RectZoom() {
             IsRectZoom = true;
             IsCenter = false;
+            MsgBox.Text = "Press left mouse button down and move in any direction to select the rectangle area, then release.";
         }
 
         private void Center() {
             IsRectZoom = false;
             IsCenter = true;
+            MsgBox.Text = "Click on left mouse button to center on cursor position.";
         }
         public void RectangleInit(double x, double y) {
             if (IsRectZoom) {
@@ -435,6 +440,7 @@ namespace AvaloniaFractalGenerator
                 IsRectZoom = false;
                 Center(left + (width / 2), top + (height / 2));
                 ZoomFactor = (int)ZoomFactor * (100 / (xProz > yProz ? xProz : yProz)); 
+                CheckMaxZoom();
                 RePaintMandelbrot();
             }
         }
