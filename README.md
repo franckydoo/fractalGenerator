@@ -2,7 +2,7 @@
 
 Cross-platform Fractal Generator on .NET Core, [Avalonia UI](https://github.com/AvaloniaUI/Avalonia) and [Image Sharp](https://github.com/SixLabors/ImageSharp). Based on Pavel Tupitsyn's [falling snow demo](https://github.com/ptupitsyn/let-it-snow).
 
-![Demo jpg](images/fractal3.jpg)
+![Demo jpg](images/program.jpg)
 
 ## Build and Run (Windows, Linux, macOS)
 
